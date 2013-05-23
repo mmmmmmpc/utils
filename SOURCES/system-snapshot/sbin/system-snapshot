@@ -3,13 +3,15 @@
 # Script to create, merge or discard snapshots of system volumes
 # it also backs up /boot in order to be enable the 
 #
+# This file may be distributed under the terms of the GNU General
+# Public License.
+#
 # Author:   Miguel Pérez Colino <mperez@redhat.com>
+# Version:  0.1
 # Modifications:
 #           2013-05-22  Creation
 #           2013-05-23  Added some checks and logging
 #
-
-#LOGFILE="/var/log/$(basename $0).log" ; exec 3>&2 ; exec 1>&2 ; exec 2>> $LOGFILE
 
 # Default options
 BACKUP_DEVICES=""

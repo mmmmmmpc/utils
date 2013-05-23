@@ -1,0 +1,4 @@
+# System-snapshot config file
+# Include the devices to be snapshotted separated by spaces
+BACKUP_DEVICES=""
+
