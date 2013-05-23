@@ -47,10 +47,13 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%config(noreplace)/etc/sysconfig/system-snapshot
-%attr(0755,root,root) /sbin/system-snapshot
+%config(noreplace) %attr(0640,root,root) %{_sysconfdir}/sysconfig/system-snapshot
+%attr(0750,root,root) %{_sbindir}/system-snapshot
+%attr(0644,root,root) %{_mandir}/man8/system-snapshot.8.gz
 
 %changelog
 * Thu May 23 2013 Miguel Perez <mperez@redhat.com>
 - Initial release
+- Added manpages
+- Substituted system dirs for its macros counterparts
 
