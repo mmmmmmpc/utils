@@ -16,7 +16,7 @@
 # Default options
 BACKUP_DEVICES=""
 BOOT_BACKUP_DIR="/var/tmp/boot"
-LVCREATE_SIZE_ARGS="--extents 20%ORIGIN"
+SNAPSHOT_SIZE="20"
 
 # Sourcing config file
 if [ -r /etc/sysconfig/$(basename $0) ] 
@@ -50,7 +50,7 @@ function lv_create {
             notify "Snapshot ${DEVICE}_snap already in place, Please discard first"
         else
             notify "Creating snapshot ${DEVICE}_snap for device ${DEVICE}"
-            lvcreate ${LVCREATE_SIZE_ARGS} --snapshot --name ${DEVICE}_snap ${DEVICE}
+            lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snap ${DEVICE}
             if [ $? = 0 ] ; then
                 notify "Snapshot for ${DEVICE} created OK"
             else

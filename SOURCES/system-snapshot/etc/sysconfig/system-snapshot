@@ -1,4 +1,7 @@
 # System-snapshot config file
+
 # Include the devices to be snapshotted separated by spaces
 BACKUP_DEVICES=""
 
+# Define percentage of the size to be allocated for the snapshot
+SNAPSHOT_SIZE="20"
