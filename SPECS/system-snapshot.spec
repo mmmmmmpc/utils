@@ -1,5 +1,5 @@
 Name:		system-snapshot
-Version:	0.1
+Version:	0.2
 Release:	1
 Summary:	Util to create merge or discard filesystem snapshots
 
