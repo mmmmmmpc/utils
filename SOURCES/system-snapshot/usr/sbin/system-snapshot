@@ -7,7 +7,7 @@
 # Public License.
 #
 # Author:   Miguel Pérez Colino <mperez@redhat.com>
-# Version:  0.1
+# Version:  0.2
 # Modifications:
 #           2013-05-22  Creation
 #           2013-05-23  Added some checks and logging
@@ -19,7 +19,12 @@ BOOT_BACKUP_DIR="/var/tmp/boot"
 LVCREATE_SIZE_ARGS="--extents 20%ORIGIN"
 
 # Sourcing config file
-[ -r /etc/sysconfig/$(basename $0) ] && . /etc/sysconfig/$(basename $0)
+if [ -r /etc/sysconfig/$(basename $0) ] 
+	source /etc/sysconfig/$(basename $0)
+else
+	echo "Configuration file /etc/sysconfig/$(basename $0) not found"
+	exit 9
+fi
 
 # Check we are running as root
 if [ $(id -u) -ne 0 ]; then
