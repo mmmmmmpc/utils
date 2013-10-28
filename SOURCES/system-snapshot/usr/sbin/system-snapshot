@@ -38,6 +38,7 @@ function usage {
     exit 8
 }
 
+# Funtion "notify". Shows on screen and logs messages consistently
 function notify {
     echo $1
     echo $(basename $0) [$$] $1 | logger
