@@ -3,5 +3,8 @@
 # Include the devices to be snapshotted separated by spaces
 BACKUP_DEVICES=""
 
+# Set the directory to host the snapshot and boot backup information 
+BACKUP_DIR=""
+
 # Define percentage of the size to be allocated for the snapshot
 SNAPSHOT_SIZE="20"

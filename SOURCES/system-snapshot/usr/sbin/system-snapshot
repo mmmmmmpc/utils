@@ -15,7 +15,7 @@
 
 # Default options
 BACKUP_DEVICES=""
-BOOT_BACKUP_DIR="/var/tmp/boot"
+BACKUP_DIR="/var/tmp/system-snapshot"
 SNAPSHOT_SIZE="20"
 
 # Sourcing config file
@@ -25,6 +25,8 @@ else
 	echo "Configuration file /etc/sysconfig/$(basename $0) not found"
 	exit 9
 fi
+
+BOOT_BACKUP_DIR=${BACKUP_DIR}/boot
 
 # Check we are running as root
 if [ $(id -u) -ne 0 ]; then
