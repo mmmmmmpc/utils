@@ -26,6 +26,12 @@ else
 	exit 9
 fi
 
+# Check existence of BACKUP_DIR and create it if needed
+if [ ! -d ${BACKUP_DIR} ] ; then
+	notify "Creating base backup dir ${BACKUP_DIR}"
+    mkdir -p ${BACKUP_DIR}
+fi
+
 BOOT_BACKUP_DIR=${BACKUP_DIR}/boot
 
 # Check we are running as root
