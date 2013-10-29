@@ -11,13 +11,18 @@
 # Modifications:
 #           2013-05-22  Creation
 #           2013-05-23  Added some checks and logging
+#           2013-10-29  Added backup config
 #
+# Errorlevels
+#			1	No parameters received 
+#			2	Main config file not found
 
 # Default options
 BACKUP_DEVICES=""
 BACKUP_DIR="/var/tmp/system-snapshot"
+BACKUP_CONFIG="${BACKUP_DIR}/config·
+BOOT_BACKUP_DIR="${BACKUP_DIR}/boot"
 SNAPSHOT_SIZE="20"
-DATE=$(date +%Y%m%d)
 
 # Check we are running as root
 if [ $(id -u) -ne 0 ]; then
@@ -30,30 +35,8 @@ if [ -r /etc/sysconfig/$(basename $0) ]
 	source /etc/sysconfig/$(basename $0)
 else
 	echo "Configuration file /etc/sysconfig/$(basename $0) not found"
-	exit 9
-fi
-
-function instance_create {
-	# Check existence of BACKUP_DIR and create it if needed
-	if [ ! -d ${BACKUP_DIR} ] ; then
-		notify "Creating base backup dir ${BACKUP_DIR}"
-    	mkdir -p ${BACKUP_DIR}
-	fi
-
-	INSTANCE_DIR=$(mktemp -d --tmpdir=${BACKUP_DIR} snapshot_${DATE}_XXXXX)
-	INSTANCE=$(basename ${INSTANCE_DIR})
-	INSTANCE_CONFIG="${INSTANCE_DIR}/config"
-	BOOT_BACKUP_DIR=${INSTANCE_DIR}/boot
-	
-	echo "INSTANCE=${INSTANCE}" >> ${INSTANCE_CONFIG}
-	echo "INSTANCE_DIR=${INSTANCE_DIR}" >> ${INSTANCE_CONFIG}
-	echo "BOOT_BACKUP_DIR=${BOOT_BACKUP_DIR}" >> ${INSTANCE_CONFIG}
-	echo "BACKUP_DEVICES=${BACKUP_DEVICES}" >> ${INSTANCE_CONFIG}
-	
-}
-
-function instance_load {
-}
+	exit 2
+fi	
 
 function usage {
     echo "Usage: $(basename $0) [--create|--rollback|--discard]"
@@ -81,6 +64,7 @@ function lv_create {
             fi
         fi
     done
+    echo "BACKUP_DEVICES=${BACKUP_DEVICES}" >> ${BACKUP_CONFIG}
 }
 
 function lv_rollback {
@@ -104,9 +88,15 @@ function lv_discard {
 }
 
 function boot_create {
+	
+	# Check existence of BACKUP_DIR and create it if needed
+	if [ ! -d ${BACKUP_DIR} ] ; then
+		notify "Creating base backup dir ${BACKUP_DIR}"
+    	mkdir -p ${BACKUP_DIR}
+	fi
     if [ ! -d ${BOOT_BACKUP_DIR} ] ; then
         notify "Creating boot backup dir ${BOOT_BACKUP_DIR}"
-        mkdir ${BOOT_BACKUP_DIR}
+        mkdir -p ${BOOT_BACKUP_DIR}
     fi
     if [ -f ${BOOT_BACKUP_DIR}/.backup_ok ] ; then
         notify "Backup in ${BOOT_BACKUP_DIR} already there. Please discard first"
@@ -118,8 +108,10 @@ function boot_create {
             touch ${BOOT_BACKUP_DIR}/.backup_ok
         else
             notify "Error in /boot backup"
+            exit 2
         fi
-    fi
+    echo "BOOT_BACKUP_DIR=${BOOT_BACKUP_DIR}" >> ${BACKUP_CONFIG}
+	fi
 }
 
 function boot_rollback {
@@ -138,22 +130,24 @@ function boot_discard {
 
 case "$1" in
     --create)
-		instance_create
-        boot_create
+		boot_create
         lv_create
+        echo "DATE=$(date +%Y%m%d)" >> ${BACKUP_CONFIG}
         ;;
     --rollback)
-    	instance_load
-        boot_rollback
+    	boot_rollback
         lv_rollback
         ;;
     --discard)
-    	instance_load
-        boot_discard
+    	boot_discard
         lv_discard
         ;;
-    --help|--usage|*)
+    --help|--usage)
         usage
+        ;;
+    *)
+        usage
+        exit 1
 esac
 
 
