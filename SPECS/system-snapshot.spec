@@ -52,7 +52,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{_mandir}/man8/system-snapshot.8.gz
 
 %changelog
-* Thu May 23 2013 Miguel Perez <mperez@redhat.com>
+* Tue Oct 29 2013 Miguel Perez <mperez@redhat.com> 0.2-1
+- Bumped release
+
+* Thu May 23 2013 Miguel Perez <mperez@redhat.com> 0.1
 - Initial release
 - Added manpages
 - Substituted system dirs for its macros counterparts
