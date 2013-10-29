@@ -19,9 +19,11 @@
 #			3	Main config file not found
 #			4	No backup devices defined in config file 
 #			5	Snapshot already in place
-#			6	Problem creating snapshot
+#			6	Error during snapshot creation
 #			7	Backup config file not found
 #			8 	LV device not found
+#			9	Error during rollback
+#			10	Error during discard
 
 # Default options
 BACKUP_DEVICES=""
@@ -108,13 +110,23 @@ function lv_rollback {
     done
     
     # Rollback!!!
-	# TODO: ask user for confirmation on reboot before rolling back
+	ERRORLVL=0
     for DEVICE in $BACKUP_DEVICES ; do
         notify "Rolling back snapshot ${DEVICE}_snapshot into device ${DEVICE}"
         lvconvert --merge ${DEVICE}_snapshot --background
+        if [ $? = 0 ] ; then
+            notify "Snapshot ${DEVICE}_snapshot rollback OK"
+        else
+            notify "Error in ${DEVICE}_snapshot rollback"
+            ERRORLVL=1
+        fi
     done
+    if [ ERRORLVL != 0 ] ; then
+    	notify "Error during rollback"
+    	exit 9
+    fi 
+    
     notify "To finish the rollback, the system needs to be rebooted"
-    # TODO: call reboot
 }
 
 function lv_discard {
@@ -134,6 +146,7 @@ function lv_discard {
 		fi
 	done
     
+    ERRORLVL=0
     for DEVICE in $BACKUP_DEVICES ; do
         notify "Discarding device ${DEVICE}_snapshot"
         lvremove -f ${DEVICE}_snapshot
@@ -141,12 +154,16 @@ function lv_discard {
             notify "Snapshot ${DEVICE}_snapshot discarded OK"
         else
             notify "Error discarding snapshot ${DEVICE}_snapshot"
+            ERRORLVL=1
         fi
     done
+    if [ ERRORLVL != 0 ] ; then
+    	notify "Error during discard"
+    	exit 10
+    fi 
 }
 
 function boot_create {
-	
 	# Check existence of BACKUP_DIR and create it if needed
 	if [ ! -d ${BACKUP_DIR} ] ; then
 		notify "Creating base backup dir ${BACKUP_DIR}"
@@ -195,6 +212,12 @@ case "$1" in
     --rollback)
     	boot_rollback
         lv_rollback
+        ;;
+    --rollback-and-reboot)
+    	boot_rollback
+        lv_rollback
+        notify "Rebooting ..."
+        reboot
         ;;
     --discard)
     	boot_discard
