@@ -15,7 +15,13 @@
 #
 # Errorlevels
 #			1	No parameters received 
-#			2	Main config file not found
+#			2	Command not run as root
+#			3	Main config file not found
+#			4	No backup devices defined in config file 
+#			5	Snapshot already in place
+#			6	Problem creating snapshot
+#			7	Backup config file not found
+#			8 	LV device not found
 
 # Default options
 BACKUP_DEVICES=""
@@ -27,20 +33,19 @@ SNAPSHOT_SIZE="20"
 # Check we are running as root
 if [ $(id -u) -ne 0 ]; then
     echo "This program must be run as root"
-    exit 1
+    exit 2
 fi
 
-# Sourcing config file
+# Loading vars from config file
 if [ -r /etc/sysconfig/$(basename $0) ] 
 	source /etc/sysconfig/$(basename $0)
 else
 	echo "Configuration file /etc/sysconfig/$(basename $0) not found"
-	exit 2
+	exit 3
 fi	
 
 function usage {
     echo "Usage: $(basename $0) [--create|--rollback|--discard]"
-    exit 8
 }
 
 # Funtion "notify". Shows on screen and logs messages consistently
@@ -49,40 +54,93 @@ function notify {
     echo $(basename $0) [$$] $1 | logger
 }
 
+# Function to create LVM snapshots
 function lv_create {
+	# Check the existence of backup devices in config file
+	if [ "xBACKUP_DEVICES" = "x" ] ;
+		notify "No backup devices defined in config file /etc/sysconfig/$(basename $0)"
+		exit 4
+	fi
+    
+	# Check of previously created snapshots
     for DEVICE in $BACKUP_DEVICES ; do
-        if [ -r ${DEVICE}_${INSTANCE} ] ; then
-            notify "Snapshot ${DEVICE}_${INSTANCE} already in place, Please discard first"
-        else
-            notify "Creating snapshot ${DEVICE}_${INSTANCE} for device ${DEVICE}"
-            lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_${INSTANCE} ${DEVICE}
-            if [ $? = 0 ] ; then
-                notify "Snapshot for ${DEVICE} created OK"
-            else
-                notify "Error creating snapshot for ${DEVICE}"
-                exit 1
-            fi
+        if [ -r ${DEVICE}_snapshot ] ; then
+            notify "Snapshot ${DEVICE}_snapshot already in place, Please discard first"
+            exit 5
         fi
     done
+    
+    # Create snapshots
+    for DEVICE in $BACKUP_DEVICES ; do
+        notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
+        lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE}
+        if [ $? = 0 ] ; then
+            notify "Snapshot for ${DEVICE} created OK"
+        else
+            notify "Error creating snapshot for ${DEVICE}"
+            exit 6
+        fi
+	done
+    
+    # Include snapshots in config file
     echo "BACKUP_DEVICES=${BACKUP_DEVICES}" >> ${BACKUP_CONFIG}
 }
 
 function lv_rollback {
+	# Check existence of backup config file and load it
+	if [ -r ${BACKUP_CONFIG} ] ; then
+        notify "Backup config file ${BACKUP_CONFIG} not found."
+        exit 7
+	else
+		source ${BACKUP_CONFIG}
+    fi
+    
+    # Check snapshot devices in place
     for DEVICE in $BACKUP_DEVICES ; do
-        notify "Rolling back snapshot ${DEVICE}_${INSTANCE} into device ${DEVICE}"
-        lvconvert --merge ${DEVICE}_${INSTANCE} --background
+		if [ ! -r ${DEVICE}_snapshot ] ; then
+			notify "Device ${DEVICE}_snapshot not found exiting...!
+			exit 8
+		fi
+		if [ ! -r ${DEVICE} ] ; then
+			notify "Device ${DEVICE} not found exiting...!
+			exit 8
+        fi	
     done
-    notify "To finish the rollback, you need to reboot the machine"
+    
+    # Rollback!!!
+	# TODO: ask user for confirmation on reboot before rolling back
+    for DEVICE in $BACKUP_DEVICES ; do
+        notify "Rolling back snapshot ${DEVICE}_snapshot into device ${DEVICE}"
+        lvconvert --merge ${DEVICE}_snapshot --background
+    done
+    notify "To finish the rollback, the system needs to be rebooted"
+    # TODO: call reboot
 }
 
 function lv_discard {
+	# Check existence of backup config file and load it
+	if [ -r ${BACKUP_CONFIG} ] ; then
+        notify "Backup config file ${BACKUP_CONFIG} not found."
+        exit 7
+	else
+		source ${BACKUP_CONFIG}
+    fi
+    
+    # Check backup devices in place
     for DEVICE in $BACKUP_DEVICES ; do
-        notify "Discarding device ${DEVICE}_${INSTANCE}"
-        lvremove -f ${DEVICE}_${INSTANCE}
+		if [ ! -r ${DEVICE}_snapshot ] ; then
+			notify "Device ${DEVICE}_snapshot not found exiting...!
+			exit 8
+		fi
+	done
+    
+    for DEVICE in $BACKUP_DEVICES ; do
+        notify "Discarding device ${DEVICE}_snapshot"
+        lvremove -f ${DEVICE}_snapshot
         if [ $? = 0 ] ; then
-            notify "Snapshot ${DEVICE}_${INSTANCE} discarded OK"
+            notify "Snapshot ${DEVICE}_snapshot discarded OK"
         else
-            notify "Error discarding snapshot ${DEVICE}_${INSTANCE}"
+            notify "Error discarding snapshot ${DEVICE}_snapshot"
         fi
     done
 }
@@ -144,6 +202,7 @@ case "$1" in
         ;;
     --help|--usage)
         usage
+        exit 0
         ;;
     *)
         usage
