@@ -54,11 +54,11 @@ function notify {
 
 function lv_create {
     for DEVICE in $BACKUP_DEVICES ; do
-        if [ -r ${DEVICE}_snapshot ] ; then
-            notify "Snapshot ${DEVICE}_snapshot already in place, Please discard first"
+        if [ -r ${DEVICE}_snap ] ; then
+            notify "Snapshot ${DEVICE}_snap already in place, Please discard first"
         else
-            notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
-            lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE}
+            notify "Creating snapshot ${DEVICE}_snap for device ${DEVICE}"
+            lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snap ${DEVICE}
             if [ $? = 0 ] ; then
                 notify "Snapshot for ${DEVICE} created OK"
             else
@@ -71,20 +71,20 @@ function lv_create {
 
 function lv_rollback {
     for DEVICE in $BACKUP_DEVICES ; do
-        notify "Merging snapshot ${DEVICE}_snapshot into device ${DEVICE}"
-        lvconvert --merge ${DEVICE}_snapshot --background
+        notify "Merging snapshot ${DEVICE}_snap into device ${DEVICE}"
+        lvconvert --merge ${DEVICE}_snap --background
     done
     notify "To finish the rollback, you need to reboot the machine"
 }
 
 function lv_discard {
     for DEVICE in $BACKUP_DEVICES ; do
-        notify "Discarding device ${DEVICE}_snapshot"
-        lvremove -f ${DEVICE}_snapshot
+        notify "Discarding device ${DEVICE}_snap"
+        lvremove -f ${DEVICE}_snap
         if [ $? = 0 ] ; then
-            notify "Snapshot ${DEVICE}_snapshot discarded OK"
+            notify "Snapshot ${DEVICE}_snap discarded OK"
         else
-            notify "Error discarding snapshot ${DEVICE}_snapshot"
+            notify "Error discarding snapshot ${DEVICE}_snap"
         fi
     done
 }
