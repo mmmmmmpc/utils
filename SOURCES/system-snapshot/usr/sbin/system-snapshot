@@ -17,6 +17,13 @@
 BACKUP_DEVICES=""
 BACKUP_DIR="/var/tmp/system-snapshot"
 SNAPSHOT_SIZE="20"
+DATE=$(date +%Y%m%d)
+
+# Check we are running as root
+if [ $(id -u) -ne 0 ]; then
+    echo "This program must be run as root"
+    exit 1
+fi
 
 # Sourcing config file
 if [ -r /etc/sysconfig/$(basename $0) ] 
@@ -26,20 +33,27 @@ else
 	exit 9
 fi
 
-# Check existence of BACKUP_DIR and create it if needed
-if [ ! -d ${BACKUP_DIR} ] ; then
-	notify "Creating base backup dir ${BACKUP_DIR}"
-    mkdir -p ${BACKUP_DIR}
-fi
+function instance_create {
+	# Check existence of BACKUP_DIR and create it if needed
+	if [ ! -d ${BACKUP_DIR} ] ; then
+		notify "Creating base backup dir ${BACKUP_DIR}"
+    	mkdir -p ${BACKUP_DIR}
+	fi
 
-BOOT_BACKUP_DIR=${BACKUP_DIR}/boot
+	INSTANCE_DIR=$(mktemp -d --tmpdir=${BACKUP_DIR} snapshot_${DATE}_XXXXX)
+	INSTANCE=$(basename ${INSTANCE_DIR})
+	INSTANCE_CONFIG="${INSTANCE_DIR}/config"
+	BOOT_BACKUP_DIR=${INSTANCE_DIR}/boot
+	
+	echo "INSTANCE=${INSTANCE}" >> ${INSTANCE_CONFIG}
+	echo "INSTANCE_DIR=${INSTANCE_DIR}" >> ${INSTANCE_CONFIG}
+	echo "BOOT_BACKUP_DIR=${BOOT_BACKUP_DIR}" >> ${INSTANCE_CONFIG}
+	echo "BACKUP_DEVICES=${BACKUP_DEVICES}" >> ${INSTANCE_CONFIG}
+	
+}
 
-# Check we are running as root
-if [ $(id -u) -ne 0 ]; then
-    echo "This program must be run as root"
-    exit 1
-fi
-
+function instance_load {
+}
 
 function usage {
     echo "Usage: $(basename $0) [--create|--rollback|--discard]"
@@ -54,11 +68,11 @@ function notify {
 
 function lv_create {
     for DEVICE in $BACKUP_DEVICES ; do
-        if [ -r ${DEVICE}_snapshot ] ; then
-            notify "Snapshot ${DEVICE}_snapshot already in place, Please discard first"
+        if [ -r ${DEVICE}_${INSTANCE} ] ; then
+            notify "Snapshot ${DEVICE}_${INSTANCE} already in place, Please discard first"
         else
-            notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
-            lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE}
+            notify "Creating snapshot ${DEVICE}_${INSTANCE} for device ${DEVICE}"
+            lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_${INSTANCE} ${DEVICE}
             if [ $? = 0 ] ; then
                 notify "Snapshot for ${DEVICE} created OK"
             else
@@ -71,20 +85,20 @@ function lv_create {
 
 function lv_rollback {
     for DEVICE in $BACKUP_DEVICES ; do
-        notify "Merging snapshot ${DEVICE}_snapshot into device ${DEVICE}"
-        lvconvert --merge ${DEVICE}_snapshot --background
+        notify "Rolling back snapshot ${DEVICE}_${INSTANCE} into device ${DEVICE}"
+        lvconvert --merge ${DEVICE}_${INSTANCE} --background
     done
     notify "To finish the rollback, you need to reboot the machine"
 }
 
 function lv_discard {
     for DEVICE in $BACKUP_DEVICES ; do
-        notify "Discarding device ${DEVICE}_snapshot"
-        lvremove -f ${DEVICE}_snapshot
+        notify "Discarding device ${DEVICE}_${INSTANCE}"
+        lvremove -f ${DEVICE}_${INSTANCE}
         if [ $? = 0 ] ; then
-            notify "Snapshot ${DEVICE}_snapshot discarded OK"
+            notify "Snapshot ${DEVICE}_${INSTANCE} discarded OK"
         else
-            notify "Error discarding snapshot ${DEVICE}_snapshot"
+            notify "Error discarding snapshot ${DEVICE}_${INSTANCE}"
         fi
     done
 }
@@ -124,14 +138,17 @@ function boot_discard {
 
 case "$1" in
     --create)
+		instance_create
         boot_create
         lv_create
         ;;
     --rollback)
+    	instance_load
         boot_rollback
         lv_rollback
         ;;
     --discard)
+    	instance_load
         boot_discard
         lv_discard
         ;;
