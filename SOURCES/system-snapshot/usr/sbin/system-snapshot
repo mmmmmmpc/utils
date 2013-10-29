@@ -91,7 +91,7 @@ function lv_discard {
 
 function boot_create {
     if [ ! -d ${BOOT_BACKUP_DIR} ] ; then
-        notify "Creating backup dir ${BOOT_BACKUP_DIR}"
+        notify "Creating boot backup dir ${BOOT_BACKUP_DIR}"
         mkdir ${BOOT_BACKUP_DIR}
     fi
     if [ -f ${BOOT_BACKUP_DIR}/.backup_ok ] ; then
