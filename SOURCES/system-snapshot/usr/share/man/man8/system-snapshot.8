@@ -1,0 +1,55 @@
+'\" t
+.TH "SYSTEM-SNAPSHOT" "8" "" "" "system-snapshot"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+system\-snapshot \- Create, merge or discard system snapshots 
+.SH "SYNOPSIS"
+.HP \w'\fBsystem\-snapshot\ \fR\fB[OPTIONS...]\fR\fB'u
+\fBsystem\-snapshot \fR\fB[OPTIONS...]\fR\fB
+.SH "DESCRIPTION"
+.PP
+\fBsystem\-snapshot\fR
+may be used to create snapshots and backups of the boot directory before performing any change to the system\&. Any change may performed afterwards so the system can be rolled back to the previous state\&.
+.SH "OPTIONS"
+.PP
+The following options are understood:
+.PP
+\fB\-\-create\fR
+.RS 4
+Creates the boot dir backup and the snapshots of the LVs specified in the config file\&.
+.RE
+.PP
+\fB\-\-rollback\fR
+.RS 4
+Recovers the boot backup and merges the snapshots so the LVs come back to the previous state\&.
+.RE
+.PP
+\fB\-\-discard\fR
+.RS 4
+Cleans up the boot backup and discards the snapshots\&. To be used when changes applied correctly\&.
+.RE
+.PP
+.SH "EXIT STATUS"
+.PP
+On success 0 is returned, a non\-zero failure code otherwise\&.
+.SH "NOTES"
+.PP
+Variables are sourced from config file in /etc/sysconfig/system-snapshot\&.
+.SH "SEE ALSO"
+.PP
+\fBlvm\fR(8),
+\fBlvcreate\fR(8),
