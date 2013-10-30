@@ -194,11 +194,15 @@ function boot_create {
 }
 
 function boot_rollback {
+    if [ ! -r ${BACKUP_CONFIG} ] ; then
+       	notify "Backup config file ${BACKUP_CONFIG} not found."
+       	exit 7
+	else
     if [ -f ${BOOT_BACKUP_DIR}/.backup_ok ] ; then
         notify "Restoring backup from ${BOOT_BACKUP_DIR} into /boot"
         rsync -a --delete ${BOOT_BACKUP_DIR}/ /boot/
     else
-        notify "Backup in ${BOOT_BACKUP_DIR} is not OK"
+    	notify "Backup in ${BOOT_BACKUP_DIR} is not OK"
     fi
 }
 
