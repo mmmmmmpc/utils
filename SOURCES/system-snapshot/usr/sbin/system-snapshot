@@ -86,7 +86,7 @@ function lv_create {
 	done
     
     # Include snapshots in config file
-    echo "BACKUP_DEVICES=${BACKUP_DEVICES}" >> ${BACKUP_CONFIG}
+    echo "BACKUP_DEVICES=\"${BACKUP_DEVICES}\"" >> ${BACKUP_CONFIG}
 }
 
 function lv_rollback {
@@ -189,7 +189,7 @@ function boot_create {
             notify "Error in /boot backup"
             exit 2
         fi
-    echo "BOOT_BACKUP_DIR=${BOOT_BACKUP_DIR}" >> ${BACKUP_CONFIG}
+    echo "BOOT_BACKUP_DIR=\"${BOOT_BACKUP_DIR}\"" >> ${BACKUP_CONFIG}
 	fi
 }
 
