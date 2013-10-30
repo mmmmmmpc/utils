@@ -29,7 +29,7 @@
 # Default options
 BACKUP_DEVICES=""
 BACKUP_DIR="/var/tmp/system-snapshot"
-BACKUP_CONFIG="${BACKUP_DIR}/config·
+BACKUP_CONFIG="${BACKUP_DIR}/config"
 BOOT_BACKUP_DIR="${BACKUP_DIR}/boot"
 SNAPSHOT_SIZE="20"
 
