@@ -203,8 +203,10 @@ function boot_rollback {
 }
 
 function boot_discard {
-    notify "Cleaning up backup in ${BOOT_BACKUP_DIR}"
-    rm -rf ${BOOT_BACKUP_DIR}
+	if [  -d ${BOOT_BACKUP_DIR} ] ; then
+    	notify "Cleaning up backup in ${BOOT_BACKUP_DIR}"
+    	rm -rf ${BOOT_BACKUP_DIR}    
+    fi
 }
 
 case "$1" in
