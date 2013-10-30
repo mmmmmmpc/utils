@@ -202,14 +202,13 @@ function boot_rollback {
         notify "Restoring backup from ${BOOT_BACKUP_DIR} into /boot"
         rsync -a --delete ${BOOT_BACKUP_DIR}/ /boot/
         if [ $? = 0 ] ; then
-            notify "Cleaning up backup in ${BOOT_BACKUP_DIR}"
-    		rm -rf ${BOOT_BACKUP_DIR}
+            notify "Backup ${BOOT_BACKUP_DIR} restored OK"
     	else
-    		notify "Error restoring backup from ${BOOT_BACKUP_DIR} into /boot"
+    		notify "Error restoring backup from ${BOOT_BACKUP_DIR}"
     		exit 11	
     	fi   
     else
-    	notify "Backup in ${BOOT_BACKUP_DIR} is not OK"
+    	notify "Error in backup ${BOOT_BACKUP_DIR}"
     fi
 }
 
@@ -227,8 +226,8 @@ case "$1" in
         echo "DATE=$(date +%Y%m%d)" >> ${BACKUP_CONFIG}
         ;;
     --rollback)
+    	lv_rollback
     	boot_rollback
-        lv_rollback
         ;;
     --rollback-and-reboot)
     	boot_rollback
