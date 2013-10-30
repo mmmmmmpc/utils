@@ -101,11 +101,11 @@ function lv_rollback {
     # Check snapshot devices in place
     for DEVICE in $BACKUP_DEVICES ; do
 		if [ ! -r ${DEVICE}_snapshot ] ; then
-			notify "Device ${DEVICE}_snapshot not found exiting...!
+			notify "Device ${DEVICE}_snapshot not found exiting...!"
 			exit 8
 		fi
 		if [ ! -r ${DEVICE} ] ; then
-			notify "Device ${DEVICE} not found exiting...!
+			notify "Device ${DEVICE} not found exiting...!"
 			exit 8
         fi	
     done
@@ -142,7 +142,7 @@ function lv_discard {
     # Check backup devices in place
     for DEVICE in $BACKUP_DEVICES ; do
 		if [ ! -r ${DEVICE}_snapshot ] ; then
-			notify "Device ${DEVICE}_snapshot not found exiting...!
+			notify "Device ${DEVICE}_snapshot not found exiting...!"
 			exit 8
 		fi
 	done
