@@ -221,14 +221,14 @@ function boot_discard {
 
 case "$1" in
     --create)
+		lv_create
 		boot_create
-        lv_create
         echo "DATE=$(date +%Y%m%d)" >> ${BACKUP_CONFIG}
         ;;
     --rollback)
-    	lv_rollback
     	boot_rollback
-        ;;
+    	lv_rollback
+    	;;
     --rollback-and-reboot)
     	boot_rollback
         lv_rollback
