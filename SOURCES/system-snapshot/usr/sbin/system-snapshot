@@ -161,6 +161,9 @@ function lv_discard {
     if [ ERRORLVL != 0 ] ; then
     	notify "Error during discard"
     	exit 10
+    else
+    	notify "Cleaning config file ${BACKUP_CONFIG}"
+    	rm -rf ${BACKUP_CONFIG}
     fi 
 }
 
