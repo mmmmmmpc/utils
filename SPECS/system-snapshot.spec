@@ -1,7 +1,7 @@
 Name:		system-snapshot
 Version:	0.2
 Release:	1
-Summary:	Util to create merge or discard filesystem snapshots
+Summary:	System-Snapshot is an utility to enable a system rollback at filesystem level.
 
 Group:		System Environment/Tools
 License:	GPL
@@ -18,7 +18,10 @@ Provides:	system-snapshot
 %global debug_package %{nil}
 
 %description
-Util to create merge or discard filesystem snapshots
+System-Snapshot is an utility to enable a system rollback at filesystem level.
+It performs a /boot backup and creates filesystem snapshots using the provided configuration.
+It assumes a system partitioning using LVM volumes for everything except /boot.
+The default configuration requires the volumes to be snapshotted to be included in order to be functional.  
 
 %prep
 %setup -q 
