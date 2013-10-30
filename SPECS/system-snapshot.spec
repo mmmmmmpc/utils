@@ -38,6 +38,7 @@ mkdir -p $RPM_BUILD_ROOT
 # Copy package files
 mkdir -p $RPM_BUILD_ROOT
 cp -arfv * $RPM_BUILD_ROOT
+gzip -9 $RPM_BUILD_ROOT/usr/share/man/man8/system-snapshot.8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
