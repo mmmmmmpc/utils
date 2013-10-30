@@ -25,6 +25,7 @@
 #			8 	LV device not found
 #			9	Error during rollback
 #			10	Error during discard
+#			11	Error during boot restore
 
 # Default options
 BACKUP_DEVICES=""
@@ -200,6 +201,13 @@ function boot_rollback {
 	elif [ -f ${BOOT_BACKUP_DIR}/.backup_ok ] ; then
         notify "Restoring backup from ${BOOT_BACKUP_DIR} into /boot"
         rsync -a --delete ${BOOT_BACKUP_DIR}/ /boot/
+        if [ $? = 0 ] ; then
+            notify "Cleaning up backup in ${BOOT_BACKUP_DIR}"
+    		rm -rf ${BOOT_BACKUP_DIR}
+    	else
+    		notify "Error restoring backup from ${BOOT_BACKUP_DIR} into /boot"
+    		exit 11	
+    	fi   
     else
     	notify "Backup in ${BOOT_BACKUP_DIR} is not OK"
     fi
