@@ -225,6 +225,7 @@ case "$1" in
     --rollback-and-reboot)
     	boot_rollback
         lv_rollback
+        sync ; sync
         notify "Rebooting ..."
         reboot
         ;;
