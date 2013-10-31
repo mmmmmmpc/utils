@@ -78,6 +78,8 @@ Error during boot restore
 .SH "NOTES"
 .PP
 Variables are sourced from config file in /etc/sysconfig/system-snapshot\&.
+.PP
+It is recommended to keep /var/log in a different LV and not including it in the list of volumes to snapshot.
 .SH "SEE ALSO"
 .PP
 \fBlvm\fR(8),
