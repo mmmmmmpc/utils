@@ -77,7 +77,7 @@ function lv_create {
     # Create snapshots
     for DEVICE in ${BACKUP_DEVICES} ; do
         notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
-        lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE}
+		lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE} > /dev/null 2>&1 
         if [ $? = 0 ] ; then
             notify "Snapshot for ${DEVICE} created OK"
         else
@@ -115,7 +115,7 @@ function lv_rollback {
 	ERRORLVL=0
     for DEVICE in ${BACKUP_DEVICES} ; do
         notify "Rolling back snapshot ${DEVICE}_snapshot into device ${DEVICE}"
-        lvconvert --merge ${DEVICE}_snapshot --background
+        lvconvert --merge ${DEVICE}_snapshot --background  > /dev/null 2>&1
         if [ $? = 0 ] ; then
             notify "Snapshot ${DEVICE}_snapshot rollback OK"
         else
@@ -151,7 +151,7 @@ function lv_discard {
     ERRORLVL=0
     for DEVICE in ${BACKUP_DEVICES} ; do
         notify "Discarding device ${DEVICE}_snapshot"
-        lvremove -f ${DEVICE}_snapshot
+        lvremove -f ${DEVICE}_snapshot  > /dev/null 2>&1
         if [ $? = 0 ] ; then
             notify "Snapshot ${DEVICE}_snapshot discarded OK"
         else
@@ -182,7 +182,7 @@ function boot_create {
         notify "Backup in ${BOOT_BACKUP_DIR} already there. Please discard first"
     else
         notify "Backing up /boot into ${BOOT_BACKUP_DIR}"
-        rsync -a --delete /boot/ ${BOOT_BACKUP_DIR}/
+        rsync -a --delete /boot/ ${BOOT_BACKUP_DIR}/  > /dev/null 2>&1
         if [ $? = 0 ] ; then
             notify "Backup finished OK"
             touch ${BOOT_BACKUP_DIR}/.backup_ok
@@ -200,7 +200,7 @@ function boot_rollback {
        	exit 7
 	elif [ -f ${BOOT_BACKUP_DIR}/.backup_ok ] ; then
         notify "Restoring backup from ${BOOT_BACKUP_DIR} into /boot"
-        rsync -a --delete ${BOOT_BACKUP_DIR}/ /boot/
+        rsync -a --delete ${BOOT_BACKUP_DIR}/ /boot/  > /dev/null 2>&1
         if [ $? = 0 ] ; then
             notify "Backup ${BOOT_BACKUP_DIR} restored OK"
     	else
