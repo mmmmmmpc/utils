@@ -38,14 +38,43 @@ Creates the boot dir backup and the snapshots of the LVs specified in the config
 Recovers the boot backup and merges the snapshots so the LVs come back to the previous state\&.
 .RE
 .PP
+\fB\-\-rollback\-and\-reboot\fR
+.RS 4
+Performs a rollback and, if no error is detected, reboots the machine\&.
+.RE
+.PP
 \fB\-\-discard\fR
 .RS 4
 Cleans up the boot backup and discards the snapshots\&. To be used when changes applied correctly\&.
 .RE
 .PP
-.SH "EXIT STATUS"
-.PP
-On success 0 is returned, a non\-zero failure code otherwise\&.
+.SH "EXIT VALUES"
+.PP 
+.IP "\fB0\fP"
+Success
+.IP "\fB1\fP"
+No parameters received 
+.IP "\fB2\fP"
+Command not run as root
+.IP "\fB3\fP"
+Main config file not found
+.IP "\fB4\fP"
+No backup devices defined in config file 
+.IP "\fB5\fP"
+Snapshot already in place
+.IP "\fB6\fP"
+Error during snapshot creation
+.IP "\fB7\fP"
+Backup config file not found
+.IP "\fB8\fP"
+LV device not found
+.IP "\fB9\fP"
+Error during rollback
+.IP "\fB10\fP"
+Error during discard
+.IP "\fB11\fP"
+Error during boot restore
+.RE
 .SH "NOTES"
 .PP
 Variables are sourced from config file in /etc/sysconfig/system-snapshot\&.
