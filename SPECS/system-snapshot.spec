@@ -10,7 +10,7 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:	noarch
 
 BuildRequires:	/bin/tar
-Requires:	bash
+Requires:	bash, rsync
 Provides:	system-snapshot
 
 # disable debug packages and the stripping of the binaries
