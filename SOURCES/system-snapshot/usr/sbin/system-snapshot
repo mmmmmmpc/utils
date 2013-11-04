@@ -266,6 +266,7 @@ function boot_discard {
 
 function snapshot_info {
 	if [ -r ${BACKUP_CONFIG} ] ; then
+		source ${BACKUP_CONFIG}
 		echo "Backup and snapshot found"
 		echo "Config file: ${BACKUP_CONFIG}"
 		echo "Boot backup dir: ${BOOT_BACKUP_DIR}"
