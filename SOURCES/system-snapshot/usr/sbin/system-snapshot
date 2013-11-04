@@ -26,6 +26,8 @@
 #			9	Error during rollback
 #			10	Error during discard
 #			11	Error during boot restore
+#			12	Another instance running
+#			13	Lockfile not found
 
 # Default options
 BACKUP_DEVICES=""
@@ -33,6 +35,7 @@ BACKUP_DIR="/var/tmp/system-snapshot"
 BACKUP_CONFIG="${BACKUP_DIR}/config"
 BOOT_BACKUP_DIR="${BACKUP_DIR}/boot"
 SNAPSHOT_SIZE="20"
+LOCK_FILE="/var/run/$(basename $0)"
 
 # Check we are running as root
 if [ $(id -u) -ne 0 ]; then
@@ -65,12 +68,33 @@ function  header {
     echo "##################################################"
 }
 
+# Function lock_create
+function lock_create {
+	if [ -r ${LOCK_FILE} ] ; then
+		notify "Another instance of $(basename $0) is running. Exiting"
+		exit 12
+	else
+		touch ${LOCK_FILE}
+	fi
+} 
+
+# Function lock_create
+function lock_delete {
+	if [ -r ${LOCK_FILE} ] ; then
+		rm -f ${LOCK_FILE}
+	else
+		notify "Lockfile for $(basename $0) not found. Exiting"
+		exit 13
+	fi
+} 
+
 
 # Function to create LVM snapshots
 function lv_create {
 	# Check the existence of backup devices in config file
 	if [ "xBACKUP_DEVICES" = "x" ] ; then
 		notify "No backup devices defined in config file /etc/sysconfig/$(basename $0)"
+		lock_delete
 		exit 4
 	fi
     
@@ -78,6 +102,7 @@ function lv_create {
     for DEVICE in ${BACKUP_DEVICES} ; do
         if [ -r ${DEVICE}_snapshot ] ; then
             notify "Snapshot ${DEVICE}_snapshot already in place, Please discard first"
+            lock_delete
             exit 5
         fi
     done
@@ -90,6 +115,7 @@ function lv_create {
             notify "Snapshot for ${DEVICE} created OK"
         else
             notify "Error creating snapshot for ${DEVICE}"
+            lock_delete
             exit 6
         fi
 	done
@@ -102,6 +128,7 @@ function lv_rollback {
 	# Check existence of backup config file and load it
 	if [ ! -r ${BACKUP_CONFIG} ] ; then
         notify "Backup config file ${BACKUP_CONFIG} not found."
+        lock_delete
         exit 7
 	else
 		source ${BACKUP_CONFIG}
@@ -111,10 +138,12 @@ function lv_rollback {
     for DEVICE in ${BACKUP_DEVICES} ; do
 		if [ ! -r ${DEVICE}_snapshot ] ; then
 			notify "Device ${DEVICE}_snapshot not found exiting...!"
+			lock_delete
 			exit 8
 		fi
 		if [ ! -r ${DEVICE} ] ; then
 			notify "Device ${DEVICE} not found exiting...!"
+			lock_delete
 			exit 8
         fi	
     done
@@ -133,6 +162,7 @@ function lv_rollback {
     done
     if [ ${ERRORLVL} != 0 ] ; then
     	notify "Error during rollback"
+    	lock_delete
     	exit 9
     fi 
     
@@ -143,6 +173,7 @@ function lv_discard {
 	# Check existence of backup config file and load it
 	if [ ! -r ${BACKUP_CONFIG} ] ; then
         notify "Backup config file ${BACKUP_CONFIG} not found."
+        lock_delete
         exit 7
 	else
 		source ${BACKUP_CONFIG}
@@ -152,6 +183,7 @@ function lv_discard {
     for DEVICE in ${BACKUP_DEVICES} ; do
 		if [ ! -r ${DEVICE}_snapshot ] ; then
 			notify "Device ${DEVICE}_snapshot not found exiting...!"
+			lock_delete
 			exit 8
 		fi
 	done
@@ -169,6 +201,7 @@ function lv_discard {
     done
     if [ ${ERRORLVL} != 0 ] ; then
     	notify "Error during discard"
+    	lock_delete
     	exit 10
     else
     	notify "Cleaning config file ${BACKUP_CONFIG}"
@@ -196,6 +229,7 @@ function boot_create {
             touch ${BOOT_BACKUP_DIR}/.backup_ok
         else
             notify "Error in /boot backup"
+            lock_delete
             exit 2
         fi
     echo "BOOT_BACKUP_DIR=\"${BOOT_BACKUP_DIR}\"" >> ${BACKUP_CONFIG}
@@ -205,6 +239,7 @@ function boot_create {
 function boot_rollback {
     if [ ! -r ${BACKUP_CONFIG} ] ; then
        	notify "Backup config file ${BACKUP_CONFIG} not found."
+       	lock_delete
        	exit 7
 	elif [ -f ${BOOT_BACKUP_DIR}/.backup_ok ] ; then
         notify "Restoring backup from ${BOOT_BACKUP_DIR} into /boot"
@@ -213,6 +248,7 @@ function boot_rollback {
             notify "Backup ${BOOT_BACKUP_DIR} restored OK"
     	else
     		notify "Error restoring backup from ${BOOT_BACKUP_DIR}"
+    		lock_delete
     		exit 11	
     	fi   
     else
@@ -227,30 +263,42 @@ function boot_discard {
     fi
 }
 
+function info {
+	
+}
+
 case "$1" in
     --create)
     	header "Creating snapshots and backup"
+    	lock_create
 		lv_create
 		boot_create
         echo "DATE=$(date +%Y%m%d)" >> ${BACKUP_CONFIG}
-                ;;
+        lock_delete
+        ;;
     --rollback)
     	header "Rolling-back snapshots and recovering backup"
+    	lock_create
     	boot_rollback
     	lv_rollback
+    	lock_delete
     	;;
     --rollback-and-reboot)
     	header "Rolling-back snapshots, recovering backup and rebooting"
+    	lock_create
     	boot_rollback
         lv_rollback
+        lock_delete
         sync ; sync
         notify "Rebooting ..."
         reboot
         ;;
     --discard)
-    	header "discarding snapshots and backup"
+    	header "Discarding snapshots and backup"
+    	lock_create
     	boot_discard
         lv_discard
+        lock_delete
         ;;
     --help|--usage)
         usage
