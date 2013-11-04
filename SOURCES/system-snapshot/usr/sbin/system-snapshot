@@ -52,7 +52,8 @@ else
 fi	
 
 function usage {
-    echo "Usage: $(basename $0) [--create|--rollback|--rollback-and-reboot|--discard]"
+    echo "Usage: $(basename $0) [--create|--rollback|--rollback-and-reboot|--discard|--info]"
+    echo "       To obtain more information run \"man $(basename $0)\" "
 }
 
 # Funtion "notify". Shows on screen and logs messages consistently
@@ -263,8 +264,16 @@ function boot_discard {
     fi
 }
 
-function info {
-	
+function snapshot_info {
+	if [ -r ${BACKUP_CONFIG} ] ; then
+		echo "Backup and snapshot found"
+		echo "Config file: ${BACKUP_CONFIG}"
+		echo "Boot backup dir: ${BOOT_BACKUP_DIR}"
+		echo "Snapshots of: ${BACKUP_DEVICES}"
+		echo "Date: ${DATE}"
+	else
+		echo "Backup and snapshot not found"
+	fi
 }
 
 case "$1" in
@@ -299,6 +308,10 @@ case "$1" in
     	boot_discard
         lv_discard
         lock_delete
+        ;;
+    --info)
+    	header "Info about snapshots and backup"
+    	snapshot_info
         ;;
     --help|--usage)
         usage
