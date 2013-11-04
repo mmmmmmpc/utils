@@ -58,6 +58,14 @@ function notify {
     echo $(basename $0) [$$] $1 | logger
 }
 
+# Funtion "header". Shows screen message
+function  header {
+    echo "##################################################"
+    notify "$1"
+    echo "##################################################"
+}
+
+
 # Function to create LVM snapshots
 function lv_create {
 	# Check the existence of backup devices in config file
@@ -221,15 +229,18 @@ function boot_discard {
 
 case "$1" in
     --create)
+    	header "Creating snapshots and backup"
 		lv_create
 		boot_create
         echo "DATE=$(date +%Y%m%d)" >> ${BACKUP_CONFIG}
-        ;;
+                ;;
     --rollback)
+    	header "Rolling-back snapshots and recovering backup"
     	boot_rollback
     	lv_rollback
     	;;
     --rollback-and-reboot)
+    	header "Rolling-back snapshots, recovering backup and rebooting"
     	boot_rollback
         lv_rollback
         sync ; sync
@@ -237,6 +248,7 @@ case "$1" in
         reboot
         ;;
     --discard)
+    	header "discarding snapshots and backup"
     	boot_discard
         lv_discard
         ;;
