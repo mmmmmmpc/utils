@@ -283,7 +283,7 @@ case "$1" in
     	lock_create
 		lv_create
 		boot_create
-        echo "DATE=$(date +%Y%m%d)" >> ${BACKUP_CONFIG}
+        echo "DATE=\"$(date)\"" >> ${BACKUP_CONFIG}
         lock_delete
         ;;
     --rollback)

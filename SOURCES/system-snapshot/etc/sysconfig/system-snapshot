@@ -4,7 +4,7 @@
 BACKUP_DEVICES=""
 
 # Set the directory to host the snapshot and boot backup information 
-BACKUP_DIR="/var/tmp/system-snapshot"
+BACKUP_DIR="/var/tmp/system-snapshot" 
 
 # Define percentage of the size to be allocated for the snapshot
 SNAPSHOT_SIZE="20"
