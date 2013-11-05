@@ -1,6 +1,6 @@
 Name:		system-snapshot
 Version:	0.2
-Release:	1
+Release:	2
 Summary:	System-Snapshot is an utility to enable a system rollback at filesystem level.
 
 Group:		System Environment/Tools
@@ -36,7 +36,6 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 
 # Copy package files
-mkdir -p $RPM_BUILD_ROOT
 cp -arfv * $RPM_BUILD_ROOT
 gzip -9 $RPM_BUILD_ROOT/usr/share/man/man8/system-snapshot.8
 
@@ -54,8 +53,14 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %attr(0640,root,root) %{_sysconfdir}/sysconfig/system-snapshot
 %attr(0750,root,root) %{_sbindir}/system-snapshot
 %attr(0644,root,root) %{_mandir}/man8/system-snapshot.8.gz
+%dir(0750,root,root) %{_localstatedir}/system-snapshot
+
 
 %changelog
+* Tue Nov 05 2013 Miguel Perez <mperez@redhat.com> 0.2-2
+- Added new default dir to avoid tmpwatch cleanup
+- Updated sources
+
 * Tue Oct 29 2013 Miguel Perez <mperez@redhat.com> 0.2-1
 - Bumped release
 
