@@ -52,7 +52,7 @@ else
 fi	
 
 function usage {
-    echo "Usage: $(basename $0) [--create|--rollback|--rollback-and-reboot|--discard|--info]"
+    echo "Usage: $(basename $0) [--create|--rollback|--rollback-and-reboot|--discard|--cleanup|--info]"
     echo "       To obtain more information run \"man $(basename $0)\" "
 }
 
@@ -218,6 +218,23 @@ function lv_discard {
     fi 
 }
 
+function lv_cleanup {
+	# Check existence of backup config file and load it
+	if [ -r ${BACKUP_CONFIG} ] ; then
+        notify "Backup config file ${BACKUP_CONFIG} found."
+        if [ $(grep -c -e ^BACKUP_DEVICES= -e ^BOOT_BACKUP_DIR= -e ^DATE= /var/system-snapshot/config) -eq 3 ]; then
+			notify "Backup config file ${BACKUP_CONFIG} OK."
+			source ${BACKUP_CONFIG}
+    	fi
+    else
+    	# If config file not available, use general one.
+    	notify "Backup config file not found. Using default options."
+	fi
+    
+    # Cleanup
+    lv_discard     
+}
+
 function boot_create {
     if [ ! -d ${BOOT_BACKUP_DIR} ] ; then
         notify "Creating boot backup dir ${BOOT_BACKUP_DIR}"
@@ -331,6 +348,13 @@ case "$1" in
         lv_discard
         lock_delete
         ;;
+    --cleanup)
+    	header "Cleaning up snapshots and backup"
+    	lock_create
+    	boot_discard
+        lv_cleanup
+        lock_delete
+    	;;
     --info)
     	header "Info about snapshots and backup"
     	snapshot_info
