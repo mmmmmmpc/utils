@@ -54,7 +54,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %attr(0640,root,root) %{_sysconfdir}/sysconfig/system-snapshot
 %attr(0750,root,root) %{_sbindir}/system-snapshot
 %attr(0644,root,root) %{_mandir}/man8/system-snapshot.8.gz
-%dir%{_localstatedir}/system-snapshot
+%dir %{_localstatedir}/system-snapshot
 
 
 %changelog
