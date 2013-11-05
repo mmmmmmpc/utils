@@ -70,6 +70,7 @@ function  header {
 }
 
 # Function lock_create
+# Create a lock in order to avoid two instances running at the same time
 function lock_create {
 	if [ -r ${LOCK_FILE} ] ; then
 		notify "Another instance of $(basename $0) is running. Exiting"
@@ -79,7 +80,8 @@ function lock_create {
 	fi
 } 
 
-# Function lock_create
+# Function lock_delete
+# Clean up the lock. To be used before exiting
 function lock_delete {
 	if [ -r ${LOCK_FILE} ] ; then
 		rm -f ${LOCK_FILE}
