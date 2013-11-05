@@ -64,7 +64,6 @@ function notify {
 
 # Funtion "header". Shows screen message
 function  header {
-    echo "##################################################"
     notify "$1"
     echo "##################################################"
 }
@@ -101,13 +100,17 @@ function check_create {
 	fi
     
 	# Check of previously created snapshots
+    EXISTING_DEVICES=""
     for DEVICE in ${BACKUP_DEVICES} ; do
         if [ -r ${DEVICE}_snapshot ] ; then
-            notify "Snapshot ${DEVICE}_snapshot already in place, Please discard first"
-            lock_delete
-            exit 5
+        	EXISTING_DEVICES="${DEVICE}_snapshot ${EXISTING_DEVICES}" 
         fi
     done
+	if [ $(echo ${EXISTING_DEVICES} | grep -c .) -ne 0 ] ; then
+		notify "Snapshots for ${EXISTING_DEVICES} found. Please cleanup or discard first"
+        lock_delete
+        exit 5
+	fi
     
 	# Check existence of BACKUP_DIR and create it if needed
 	if [ ! -d ${BACKUP_DIR} ] ; then
