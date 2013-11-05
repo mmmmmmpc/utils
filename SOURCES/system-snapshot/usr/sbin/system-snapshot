@@ -119,33 +119,18 @@ function check_create {
 	fi
 }  
 
-# Function to create LVM snapshots
-function lv_create {
-   
-    # Create snapshots
-    for DEVICE in ${BACKUP_DEVICES} ; do
-        notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
-		lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE} > /dev/null 2>&1 
-        if [ $? = 0 ] ; then
-            notify "Snapshot for ${DEVICE} created OK"
-        else
-            notify "Error creating snapshot for ${DEVICE}"
-            lock_delete
-            exit 6
-        fi
-	done
-    
-    # Include snapshots in config file
-    echo "BACKUP_DEVICES=\"${BACKUP_DEVICES}\"" >> ${BACKUP_CONFIG}
-}
-
-function lv_rollback {
-	# Check existence of backup config file and load it
+# Function to perform checks before rollback or discard of backup and snapshot
+function check_use {
+		# Check existence of backup config file and load it
 	if [ ! -r ${BACKUP_CONFIG} ] ; then
         notify "Backup config file ${BACKUP_CONFIG} not found."
         lock_delete
         exit 7
-	else
+	elif [ $(grep -c -e ^BACKUP_DEVICES= -e ^BOOT_BACKUP_DIR= -e ^DATE= /var/system-snapshot/config) -ne 3 ]; then
+		notify "Error in backup config file ${BACKUP_CONFIG}."
+        lock_delete
+        exit 7
+    else
 		source ${BACKUP_CONFIG}
     fi
     
@@ -162,7 +147,34 @@ function lv_rollback {
 			exit 8
         fi	
     done
+}
+
+# Function to create LVM snapshots
+function lv_create {
+    # Include snapshots line in config file
+    echo "BACKUP_DEVICES=\"\"" >> ${BACKUP_CONFIG}
     
+    # Create snapshots
+    DEVICES_SNAPSHOTTED=""
+    for DEVICE in ${BACKUP_DEVICES} ; do
+        notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
+		lvcreate --extents ${SNAPSHOT_SIZE}%ORIGIN --snapshot --name ${DEVICE}_snapshot ${DEVICE} > /dev/null 2>&1 
+        if [ $? = 0 ] ; then
+            notify "Snapshot for ${DEVICE} created OK"
+            # List of snapshotted devices created
+            DEVICES_SNAPSHOTTED="${DEVICE} ${DEVICES_SNAPSHOTTED}"
+            # List of snapshotted devices refreshed in config file
+            sed -i -e "s%^BACKUP_DEVICES=.*$%BACKUP_DEVICES=\"${DEVICES_SNAPSHOTTED}\"%" ${BACKUP_CONFIG}
+        else
+            notify "Error creating snapshot for ${DEVICE}"
+            lv_discard
+            lock_delete
+            exit 6
+        fi
+	done
+}
+
+function lv_rollback {
     # Rollback!!!
 	ERRORLVL=0
     for DEVICE in ${BACKUP_DEVICES} ; do
@@ -185,24 +197,6 @@ function lv_rollback {
 }
 
 function lv_discard {
-	# Check existence of backup config file and load it
-	if [ ! -r ${BACKUP_CONFIG} ] ; then
-        notify "Backup config file ${BACKUP_CONFIG} not found."
-        lock_delete
-        exit 7
-	else
-		source ${BACKUP_CONFIG}
-    fi
-    
-    # Check backup devices in place
-    for DEVICE in ${BACKUP_DEVICES} ; do
-		if [ ! -r ${DEVICE}_snapshot ] ; then
-			notify "Device ${DEVICE}_snapshot not found exiting...!"
-			lock_delete
-			exit 8
-		fi
-	done
-    
     ERRORLVL=0
     for DEVICE in ${BACKUP_DEVICES} ; do
         notify "Discarding device ${DEVICE}_snapshot"
@@ -281,6 +275,10 @@ function snapshot_info {
 		echo "Boot backup dir: ${BOOT_BACKUP_DIR}"
 		echo "Snapshots of: ${BACKUP_DEVICES}"
 		echo "Date: ${DATE}"
+		echo
+		echo "Snapshot info:"
+		echo "  LV               VG   Attr      LSize   Pool Origin  Data%"
+		lvs | grep _snapshot
 	else
 		echo "Backup and snapshot not found"
 	fi
@@ -299,6 +297,7 @@ case "$1" in
     --rollback)
     	header "Rolling-back snapshots and recovering backup"
     	lock_create
+    	check_use
     	boot_rollback
     	lv_rollback
     	lock_delete
@@ -306,6 +305,7 @@ case "$1" in
     --rollback-and-reboot)
     	header "Rolling-back snapshots, recovering backup and rebooting"
     	lock_create
+    	check_use
     	boot_rollback
         lv_rollback
         lock_delete
@@ -316,6 +316,7 @@ case "$1" in
     --discard)
     	header "Discarding snapshots and backup"
     	lock_create
+    	check_use
     	boot_discard
         lv_discard
         lock_delete
