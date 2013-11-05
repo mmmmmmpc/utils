@@ -162,6 +162,12 @@ function lv_create {
             sed -i -e "s%^BACKUP_DEVICES=.*$%BACKUP_DEVICES=\"${DEVICES_SNAPSHOTTED}\"%" ${BACKUP_CONFIG}
         else
             notify "Error creating snapshot for ${DEVICE}"
+            # Performing a rollback of snapshots created
+			# To avoid errors checking config file the values needed are added
+			echo "BOOT_BACKUP_DIR=\"${BOOT_BACKUP_DIR}\"" >> ${BACKUP_CONFIG}
+			echo "DATE=" >> ${BACKUP_CONFIG}
+			# Now the rollback is launched
+            check_use
             lv_discard
             lock_delete
             exit 6
