@@ -21,7 +21,7 @@
 #			4	No backup devices defined in config file 
 #			5	Snapshot already in place
 #			6	Error during snapshot creation
-#			7	Backup config file not found
+#			7	Problem with backup config file
 #			8 	LV device not found
 #			9	Error during rollback
 #			10	Error during discard
@@ -269,6 +269,7 @@ function boot_discard {
 
 function snapshot_info {
 	if [ -r ${BACKUP_CONFIG} ] ; then
+		check_use
 		source ${BACKUP_CONFIG}
 		echo "Backup and snapshot found"
 		echo "Config file: ${BACKUP_CONFIG}"
@@ -279,6 +280,15 @@ function snapshot_info {
 		echo "Snapshot info:"
 		echo "  LV               VG   Attr      LSize   Pool Origin  Data%"
 		lvs | grep _snapshot
+		echo
+		echo "Boot info:"
+		echo "  Kernels"
+		for KERNEL in $(ls ${BOOT_BACKUP_DIR}/vmlinuz*) ; do
+			echo "    $(basename ${KERNEL})"
+		done
+		echo "  Size"
+		echo "    $(du -sh ${BOOT_BACKUP_DIR})"
+		
 	else
 		echo "Backup and snapshot not found"
 	fi

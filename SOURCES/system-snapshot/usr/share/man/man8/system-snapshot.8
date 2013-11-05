@@ -70,7 +70,7 @@ Snapshot already in place
 .IP "\fB6\fP"
 Error during snapshot creation
 .IP "\fB7\fP"
-Backup config file not found
+Problem with backup config file
 .IP "\fB8\fP"
 LV device not found
 .IP "\fB9\fP"
@@ -79,12 +79,19 @@ Error during rollback
 Error during discard
 .IP "\fB11\fP"
 Error during boot restore
+.IP "\fB12\fP"
+Another instance running
+.IP "\fB13\fP"
+Lockfile not found
 .RE
 .SH "NOTES"
 .PP
+It is recommended to keep /var/log in a different LV and not including it in the list of volumes to snapshot.
+.SH "FILES"
+.PP
 Variables are sourced from config file in /etc/sysconfig/system-snapshot\&.
 .PP
-It is recommended to keep /var/log in a different LV and not including it in the list of volumes to snapshot.
+Snapshot info is stored in file config in backup dir, by default /var/system-snapshot/config\&.
 .SH "SEE ALSO"
 .PP
 \fBlvm\fR(8),
