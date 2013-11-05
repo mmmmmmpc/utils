@@ -91,11 +91,10 @@ function lock_delete {
 	fi
 } 
 
-
-# Function to create LVM snapshots
-function lv_create {
+# Function to perform checks before creation of backup and snapshot
+function check_create {
 	# Check the existence of backup devices in config file
-if [ $(echo ${BACKUP_DEVICES} | grep -c .) -eq 0 ] ; then
+	if [ $(echo ${BACKUP_DEVICES} | grep -c .) -eq 0 ] ; then
 	 	notify "No backup devices defined in config file /etc/sysconfig/$(basename $0)"
 		lock_delete
 		exit 4
@@ -110,6 +109,16 @@ if [ $(echo ${BACKUP_DEVICES} | grep -c .) -eq 0 ] ; then
         fi
     done
     
+	# Check existence of BACKUP_DIR and create it if needed
+	if [ ! -d ${BACKUP_DIR} ] ; then
+		notify "Creating base backup dir ${BACKUP_DIR}"
+    	mkdir -p ${BACKUP_DIR}
+	fi
+}  
+
+# Function to create LVM snapshots
+function lv_create {
+   
     # Create snapshots
     for DEVICE in ${BACKUP_DEVICES} ; do
         notify "Creating snapshot ${DEVICE}_snapshot for device ${DEVICE}"
@@ -213,11 +222,6 @@ function lv_discard {
 }
 
 function boot_create {
-	# Check existence of BACKUP_DIR and create it if needed
-	if [ ! -d ${BACKUP_DIR} ] ; then
-		notify "Creating base backup dir ${BACKUP_DIR}"
-    	mkdir -p ${BACKUP_DIR}
-	fi
     if [ ! -d ${BOOT_BACKUP_DIR} ] ; then
         notify "Creating boot backup dir ${BOOT_BACKUP_DIR}"
         mkdir -p ${BOOT_BACKUP_DIR}
@@ -283,6 +287,7 @@ case "$1" in
     --create)
     	header "Creating snapshots and backup"
     	lock_create
+		check_create
 		lv_create
 		boot_create
         echo "DATE=\"$(date)\"" >> ${BACKUP_CONFIG}
