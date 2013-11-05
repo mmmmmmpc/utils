@@ -93,7 +93,7 @@ function lock_delete {
 # Function to create LVM snapshots
 function lv_create {
 	# Check the existence of backup devices in config file
-	if [ "xBACKUP_DEVICES" = "x" ] ; then
+	if [ "x${BACKUP_DEVICES}" = "x" ] ; then
 		notify "No backup devices defined in config file /etc/sysconfig/$(basename $0)"
 		lock_delete
 		exit 4
