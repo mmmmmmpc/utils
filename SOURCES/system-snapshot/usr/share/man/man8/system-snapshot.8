@@ -50,7 +50,7 @@ Cleans up the boot backup and discards the snapshots\&. To be used when changes 
 .PP
 \fB\-\-cleanup\fR
 .RS 4
-Cleans up the boot backup and snapshots with minimum checks\&. To be used when changes did not apply correctly\&.
+Cleans up the boot backup and snapshots with minimum checks\&. To be used when changes did not apply correctly\&. No check will be performed before cleaning up backups and snapshots\&.
 .RE
 .PP
 \fB\-\-info\fR
@@ -88,6 +88,10 @@ Error during boot restore
 Another instance running
 .IP "\fB13\fP"
 Lockfile not found
+.IP "\fB14\fP"
+Not enough space in Volume Group
+.IP "\fB15\fP"
+Not enough space in Boot Backup dir
 .RE
 .SH "NOTES"
 .PP
