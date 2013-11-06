@@ -1,6 +1,6 @@
 Name:		system-snapshot
 Version:	0.3
-Release:	1
+Release:	2
 Summary:	System-Snapshot is an utility to enable a system rollback at filesystem level.
 
 Group:		System Environment/Tools
@@ -58,6 +58,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Nov 05 2013 Miguel Perez <mperez@redhat.com> 0.3-2
+- Updated to commit 2249a6d172f082d94b561ee0a1b9c64e83bf7bf6
+- Includes free space checking in VGs and backup dir
+
 * Tue Nov 05 2013 Miguel Perez <mperez@redhat.com> 0.3-1
 - Bumped release
 
