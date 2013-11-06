@@ -23,6 +23,8 @@
 #			11	Error during boot restore
 #			12	Another instance running
 #			13	Lockfile not found
+#			14	Not enough space in Volume Group
+#			15	Not enough space in Boot Backup dir
 
 # Default options
 BACKUP_DEVICES=""
@@ -107,6 +109,25 @@ function check_create {
         exit 5
 	fi
     
+    # Check for free space in VGs for each LV to be snapshotted
+    for DEVICE in ${BACKUP_DEVICES} ; do
+    	VG_NAME="$(lvs --noheadings -o vg_name ${DEVICE})"
+        VG_FREESPACE="$(expr 100 \* $(vgs -o vg_free --units s --noheadings ${VG_NAME}  | tr -cd '[:digit:]')  /  $(vgs -o vg_size --units s --noheadings  ${VG_NAME} | tr -cd '[:digit:]'))"
+	if [ ${VG_FREESPACE} -lt ${SNAPSHOT_SIZE} ] ; then
+		notify "Not enough space in Volume Group ${VG_NAME} for device ${DEVICE}" 
+		echo "Please add space to the Volume Group or change SNAPSHOT_SIZE in /etc/sysconfig/$(basename $0)"
+		lock_delete
+		exit 14
+	fi 
+    done
+      
+    #Check space needed for /boot backup
+	if  [ $(df -k ${BACKUP_DIR} | awk '/[0-9]%/{print $(NF-2)}' | tr -cd '[:digit:]') -lt $(du -sk /boot/ | awk '{ print $1 }' | tr -cd '[:digit:]') ] ; then
+		notify "Not enough space in ${BACKUP_DIR} to backup /boot"
+		lock_delete
+		exit 15
+	fi
+	    
 	# Check existence of BACKUP_DIR and create it if needed
 	if [ ! -d ${BACKUP_DIR} ] ; then
 		notify "Creating base backup dir ${BACKUP_DIR}"
@@ -121,7 +142,7 @@ function check_use {
         notify "Backup config file ${BACKUP_CONFIG} not found."
         lock_delete
         exit 7
-	elif [ $(grep -c -e ^BACKUP_DEVICES= -e ^BOOT_BACKUP_DIR= -e ^DATE= /var/system-snapshot/config) -ne 3 ]; then
+	elif [ $(grep -c -e ^BACKUP_DEVICES= -e ^BOOT_BACKUP_DIR= -e ^DATE= /var/system-snapshot/config) -lt 3 ]; then
 		notify "Error in backup config file ${BACKUP_CONFIG}."
         lock_delete
         exit 7
