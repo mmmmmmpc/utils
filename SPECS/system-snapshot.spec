@@ -6,6 +6,7 @@ Summary:	System-Snapshot is an utility to enable a system rollback at filesystem
 Group:		System Environment/Tools
 License:	GPL
 Source0:	%{name}-%{version}.tar.gz
+URL:		https://github.com/mperezco/utils
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:	noarch
 
