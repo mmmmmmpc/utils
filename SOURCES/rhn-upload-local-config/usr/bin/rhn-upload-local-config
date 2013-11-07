@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
 # Author: Alfredo Moralejo <alfredo.moralejo@redhat.com>
+# Modified by: Miguel Pérez Colino <mperez@redhat.com>
+#
+# Version: 0.1
 #
 
 import xmlrpclib
@@ -26,8 +29,8 @@ from up2date_client import config
 nargs=len(sys.argv)
 if nargs != 3:
   print "ERROR: The number of arguments is incorrect"
-  print "Correct syntax is: upload-local-config user files(path separated by commas)"
-  print "Example: upload-local-config user1 /etc/hosts,/etc/multipath/bindings"
+  print "Correct syntax is: rhn-upload-local-config user files(path separated by commas)"
+  print "Example: rhn-upload-local-config user1 /etc/hosts,/etc/multipath/bindings"
   sys.exit(1)
 
 
