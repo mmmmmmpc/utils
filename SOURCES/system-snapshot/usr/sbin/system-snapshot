@@ -190,7 +190,7 @@ function lv_create {
         source ${BACKUP_CONFIG}
         lv_discard
         lock_delete
-         exit 6
+        exit 6
         fi
     done
 
