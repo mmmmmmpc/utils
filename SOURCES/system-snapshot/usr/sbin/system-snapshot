@@ -182,16 +182,15 @@ function lv_create {
 	    # Create temporary config file
 	    BACKUP_CONFIG="/tmp/system-snapshot-temp-config"
 	    rm -f ${BACKUP_CONFIG}
-            # Include snapshots line in config file
+        # Include snapshots line in config file
    	    echo "BACKUP_DEVICES=\"${DEVICES_SNAPSHOTTED}\"" >> ${BACKUP_CONFIG}
-	    # To avoid errors checking config file the values needed are added
 	    echo "BOOT_BACKUP_DIR=\"${BOOT_BACKUP_DIR}\"" >> ${BACKUP_CONFIG}
 	    echo "DATE=" >> ${BACKUP_CONFIG}
 	    # Now the rollback is launched
-            source ${BACKUP_CONFIG}
-            lv_discard
-            lock_delete
-            exit 6
+        source ${BACKUP_CONFIG}
+        lv_discard
+        lock_delete
+         exit 6
         fi
     done
 
