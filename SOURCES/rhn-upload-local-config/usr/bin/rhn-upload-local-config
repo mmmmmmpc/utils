@@ -1,0 +1,100 @@
+#!/usr/bin/python
+#
+# Author: Alfredo Moralejo <alfredo.moralejo@redhat.com>
+#
+
+import xmlrpclib
+import sys
+import os
+import stat
+import pwd
+import grp
+import base64
+import xml.parsers.expat
+import libxml2
+import getpass
+from urlparse import urlparse
+
+RHNROOT = '/usr/share/rhn'
+import sys
+if RHNROOT not in sys.path:
+    sys.path.append(RHNROOT)
+
+from up2date_client import config
+
+
+nargs=len(sys.argv)
+if nargs != 3:
+  print "ERROR: The number of arguments is incorrect"
+  print "Correct syntax is: upload-local-config user files(path separated by commas)"
+  print "Example: upload-local-config user1 /etc/hosts,/etc/multipath/bindings"
+  sys.exit(1)
+
+
+login=sys.argv[1]
+files=sys.argv[2]
+
+password=getpass.getpass()
+
+commitToLocal=1
+
+urlcfg=config.getServerlURL()
+urlparsed=urlparse(urlcfg[0])
+
+server=urlparsed.hostname
+
+url = "http://" + server + "/rpc/api"
+
+def get_profile_id(path):
+    """read RHN profile id from systemid file"""
+
+    try:
+        xml = libxml2.parseFile(path)
+    except Exception, e:
+        print "Error: cannot read %s" % path
+        print e
+        sys.exit(1)
+        
+    ctx = xml.xpathNewContext()
+    
+    sid= ctx.xpathEval(\
+        "/params/param/value/struct/member/name[text()='system_id']/../value")\
+        [0].get_content()
+    #strip ID- from front
+    sid = sid[3:]
+    return sid
+
+
+systemid=get_profile_id('/etc/sysconfig/rhn/systemid')
+client = xmlrpclib.Server(url, verbose=0)
+key = client.auth.login(login, password)
+
+def upload_file(path):
+    if os.path.exists(path) == False :
+        print "File %s does not exist " % path
+        sys.exit(1)
+
+    uid=os.stat(path).st_uid
+    gid=os.stat(path).st_gid
+    mode=oct(int(stat.S_IMODE(os.stat(path).st_mode)))
+    user=pwd.getpwuid(uid)[0]
+    group=grp.getgrgid(gid)[0]
+
+    if os.path.isdir(path):
+        isDir=True
+        contents=""
+        path_info={'contents': contents, 'owner': user, 'group': group, 'permissions': mode }
+    else :
+        isDir=False
+        file=open(path)
+        contents=base64.b64encode(file.read())
+        path_info={'contents': contents, 'contents_enc64': True, 'owner': user, 'group': group, 'permissions': mode, 'macro-start-delimiter': "", 'macro-end-delimiter': ""}
+
+    result = client.system.config.createOrUpdatePath(key, int(systemid), path, isDir, path_info, commitToLocal)
+
+for file in files.split(','):
+    print "Uploading file " + file
+    upload_file(file)
+
+client.auth.logout(key)
+
