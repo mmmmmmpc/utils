@@ -111,8 +111,8 @@ function check_create {
     
     # Check for free space in VGs for each LV to be snapshotted
     for DEVICE in ${BACKUP_DEVICES} ; do
-    	VG_NAME="$(lvs --noheadings -o vg_name ${DEVICE})"
-        VG_FREESPACE="$(expr 100 \* $(vgs -o vg_free --units s --noheadings ${VG_NAME}  | tr -cd '[:digit:]')  /  $(vgs -o vg_size --units s --noheadings  ${VG_NAME} | tr -cd '[:digit:]'))"
+    	VG_NAME="$(lvs --noheadings -o vg_name ${DEVICE} 2>/dev/null)"
+        VG_FREESPACE="$(expr 100 \* $(vgs -o vg_free --units s --noheadings ${VG_NAME}  | tr -cd '[:digit:]' 2>/dev/null)  /  $(vgs -o vg_size --units s --noheadings  ${VG_NAME} | tr -cd '[:digit:]' 2>/dev/null))"
 	if [ ${VG_FREESPACE} -lt ${SNAPSHOT_SIZE} ] ; then
 		notify "Not enough space in Volume Group ${VG_NAME} for device ${DEVICE}" 
 		echo "Please add space to the Volume Group or change SNAPSHOT_SIZE in /etc/sysconfig/$(basename $0)"
@@ -142,7 +142,7 @@ function check_use {
         notify "Backup config file ${BACKUP_CONFIG} not found."
         lock_delete
         exit 7
-	elif [ $(grep -c -e ^BACKUP_DEVICES= -e ^BOOT_BACKUP_DIR= -e ^DATE= /var/system-snapshot/config) -lt 3 ]; then
+	elif [ $(grep -c -e ^BACKUP_DEVICES= -e ^BOOT_BACKUP_DIR= -e ^DATE= /var/system-snapshot/config  | tr -cd '[:digit:]'  2>/dev/null) -lt 3 ]; then
 		notify "Error in backup config file ${BACKUP_CONFIG}."
         lock_delete
         exit 7
@@ -167,9 +167,6 @@ function check_use {
 
 # Function to create LVM snapshots
 function lv_create {
-    # Include snapshots line in config file
-    echo "BACKUP_DEVICES=\"\"" >> ${BACKUP_CONFIG}
-    
     # Create snapshots
     DEVICES_SNAPSHOTTED=""
     for DEVICE in ${BACKUP_DEVICES} ; do
@@ -179,21 +176,27 @@ function lv_create {
             notify "Snapshot for ${DEVICE} created OK"
             # List of snapshotted devices created
             DEVICES_SNAPSHOTTED="${DEVICE} ${DEVICES_SNAPSHOTTED}"
-            # List of snapshotted devices refreshed in config file
-            sed -i -e "s%^BACKUP_DEVICES=.*$%BACKUP_DEVICES=\"${DEVICES_SNAPSHOTTED}\"%" ${BACKUP_CONFIG}
         else
             notify "Error creating snapshot for ${DEVICE}"
             # Performing a rollback of snapshots created
-			# To avoid errors checking config file the values needed are added
-			echo "BOOT_BACKUP_DIR=\"${BOOT_BACKUP_DIR}\"" >> ${BACKUP_CONFIG}
-			echo "DATE=" >> ${BACKUP_CONFIG}
-			# Now the rollback is launched
-            check_use
+	    # Create temporary config file
+	    BACKUP_CONFIG="/tmp/system-snapshot-temp-config"
+	    rm -f ${BACKUP_CONFIG}
+            # Include snapshots line in config file
+   	    echo "BACKUP_DEVICES=\"${DEVICES_SNAPSHOTTED}\"" >> ${BACKUP_CONFIG}
+	    # To avoid errors checking config file the values needed are added
+	    echo "BOOT_BACKUP_DIR=\"${BOOT_BACKUP_DIR}\"" >> ${BACKUP_CONFIG}
+	    echo "DATE=" >> ${BACKUP_CONFIG}
+	    # Now the rollback is launched
+            source ${BACKUP_CONFIG}
             lv_discard
             lock_delete
             exit 6
         fi
-	done
+    done
+
+    # Include the list of devices in config file
+    echo "BACKUP_DEVICES=\"${DEVICES_SNAPSHOTTED}\"" >> ${BACKUP_CONFIG}
 }
 
 function lv_rollback {
